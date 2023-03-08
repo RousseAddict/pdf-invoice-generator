@@ -1,11 +1,28 @@
 const express = require('express')
 const app = express()
+const cors = require('cors')
 const { generateInvoice } = require('./invoice')
 const dotenv = require('dotenv')
 
 dotenv.config()
 
 const PORT = process.env.PORT ?? 3000
+
+const whitelist = (process.env.CORS_DOMAINS || '').split(',').map(item => item.trim())
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+}
+
+if (process.env.NODE_ENV !== 'development') {
+  app.use(cors(corsOptions))
+}
 
 app.use(express.json())
 
