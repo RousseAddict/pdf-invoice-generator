@@ -1,19 +1,17 @@
 const PDFDocument = require('pdfkit')
 const fs = require('fs')
-const { Webhook } = require('discord-webhook-node')
 const dotenv = require('dotenv')
+const { send: sendDiscord } = require('./sender/discord')
+const { send: sendGDrive } = require('./sender/gdrive')
 
 dotenv.config()
 
 async function sendInvoice(filePath) {
-  const hook = new Webhook(process.env.WEBHOOK_URL ?? '')
-  hook.setUsername(process.env.WEBHOOK_NAME ?? 'Invoice')
-  hook.setAvatar(process.env.WEBHOOK_IMG ?? '')
-
-  try {
-    await hook.sendFile(filePath)
-  } catch (e) {
-    await hook.send(`error sending invoice: ${e}`)
+  if (process.env.WEBHOOK_URL) {
+    await sendDiscord(filePath)
+  }
+  if (process.env.GOOGLE_DRIVE_CLIENT_ID) {
+    await sendGDrive(filePath)
   }
 }
 

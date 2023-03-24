@@ -14,9 +14,24 @@ Server
 
 PDF Generation
 
+### discord sender
+
 - `WEBHOOK_URL` (mandatory): correspond to the discord webhook url where we'll push the invoice
 - `WEBHOOK_NAME` (optional): set up a custom name for the discord bot. Default value: Invoice
 - `WEBHOOK_IMG` (optional): set up a custom avatar image for the discord bot.
+
+#### google drive sender
+
+- GOOGLE_DRIVE_CLIENT_ID (mandatory): Oauth2 google client id
+- GOOGLE_DRIVE_CLIENT_SECRET (mandatory): Oauth2 google client secret
+- GOOGLE_DRIVE_REDIRECT_URI (mandatory): [Oauth2 google redirect uri (https://developers.google.com/oauthplayground)](https://developers.google.com/oauthplayground)
+- GOOGLE_DRIVE_REFRESH_TOKEN (mandatory): Oauth2 refresh token
+- GOOGLE_DRIVE_FOLDER_NAME (optional): folder to upload the file.
+  
+
+documentation to create your Google Cloud PLatform credentials : [https://blog.tericcabrel.com/upload-file-to-google-drive-with-nodejs/](https://blog.tericcabrel.com/upload-file-to-google-drive-with-nodejs/)
+
+documentation to authorize the refresh token to match your client id: [https://stackoverflow.com/questions/13871982/unable-to-refresh-access-token-response-is-unauthorized-client](https://stackoverflow.com/questions/13871982/unable-to-refresh-access-token-response-is-unauthorized-client)
 
 
 ## Usage example
