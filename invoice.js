@@ -36,7 +36,7 @@ async function generateInvoice(orderId, customerInfo, commandLines) {
   doc.fontSize(12).text('Order Lines:')
   for (const commandLine of commandLines) {
     const { name, description, totalPrice: lineTotal } = commandLine
-    doc.fontSize(10).text(`${name} - ${description} - $${lineTotal}`, { align: 'right' })
+    doc.fontSize(10).text(`${name} - ${description} - $${lineTotal}`, { align: 'left' })
     totalPrice += lineTotal
   }
   doc.moveDown()
