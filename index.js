@@ -3,9 +3,12 @@ const app = express()
 const cors = require('cors')
 const { generateInvoice } = require('./invoice')
 const { validate, validateCart } = require('./validate')
+// const { toLineItems } = require('./utils/toLineItems')
 const dotenv = require('dotenv')
 
 dotenv.config()
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 
 const PORT = process.env.PORT ?? 3000
 
@@ -27,7 +30,7 @@ if (process.env.NODE_ENV !== 'development') {
 
 app.use(express.json())
 
-app.post('/validate', (req, res) => {
+app.post('/create-payment', async (req, res) => {
   try {
     const { cart, customerInfo } = req.body
 
@@ -36,45 +39,64 @@ app.post('/validate', (req, res) => {
       return
     }
 
-    const isValid = validate(cart, customerInfo)
-
-    res.contentType('application/json')
-    res.send({ isValid })
-  } catch (error) {
-    console.error(error)
-    res.status(500).send('Error validating data')
-  }
-})
-
-app.post('/order', async (req, res) => {
-  try {
-    const { cart, customerInfo } = req.body
-
-    if (!cart || !customerInfo) {
-      res.status(400).send('Invalid request data')
-      return
-    }
     const isValid = validate(cart, customerInfo)
 
     if (isValid) {
-      const { commandLines } = validateCart(cart)
-      const orderId = `${customerInfo.fullName}-${Date.now()}`
+      // const session = await stripe.checkout.sessions.create({ 
+      //   payment_method_types: ['card'],
+      //   line_items: toLineItems(cart), 
+      //   mode: 'payment', 
+      //   success_url: `http://localhost:${PORT}/success`, 
+      //   cancel_url: `http://localhost:${PORT}/cancel`, 
+      // });
+    
+      const { total, commandLines } = validateCart(cart)
 
-      await generateInvoice(orderId, customerInfo, commandLines)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: total * 100, //stripe needs an integer including the smallest possible values for the currency
+        currency: 'eur',
+        payment_method_types: ['card'],
+        metadata: {
+          commandLines: JSON.stringify(commandLines),
+          customerInfo: JSON.stringify(customerInfo),
+          orderId: `order-${customerInfo.fullName.substring(0, 1)}-${Date.now()}`,
+        }
+      })
 
-      res.contentType('application/json')
-      res.send({ isValid, orderId, commandLines, customerInfo })
-      return
+    
+      return res.json({
+        isValid,
+        clientSecret: paymentIntent.client_secret,
+        cart,
+        total,
+      })
     }
 
-    res.contentType('application/json')
-    res.send({ isValid })
+    return res.json({ isValid })
   } catch (error) {
     console.error(error)
-    res.status(500).send('Error validating data')
+    res.status(500).send({ error: error || 'Error validating data' })
   }
 })
 
+app.get('/check-payment', async (req, res) => {
+
+  if (!req.query.id) {
+    res.status(400).send('No id passed')
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(req.query.id)
+  
+    return res.json({
+      status: paymentIntent.status,
+      orderId: paymentIntent.metadata.orderId,
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).send({ error: error || 'Error validating data' })
+  }
+})
 
 app.post('/invoice', async (req, res) => {
   try {
@@ -92,7 +114,7 @@ app.post('/invoice', async (req, res) => {
     res.send(pdf)
   } catch (error) {
     console.error(error)
-    res.status(500).send('Error generating invoice')
+    res.status(500).send({ error: error || 'Error generating invoice' })
   }
 })
 

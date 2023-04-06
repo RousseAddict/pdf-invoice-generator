@@ -38,12 +38,15 @@ const computeCustomPrice = ({
 
 function validateCart (cart) {
   let isValid = true;
+  let total = 0;
   const commandLines = [...cart].map((product) => {
     if (product.type && product.length && product.width && product.thickness && product.quantity) {
       return {
         name: product.name,
         description: `Type: ${product.type}. Dimension: ${product.length} x ${product.width} x ${product.thickness}. Qty: ${product.quantity}`,
+        unitPrice: computeCustomPrice(product),
         totalPrice: computeCustomPrice(product) * product.quantity,
+        quantity: product.quantity,
       }
     }
 
@@ -51,7 +54,9 @@ function validateCart (cart) {
       return {
         name: product.name,
         description: `Qty: ${product.quantity}`,
+        unitPrice: computeProductPrice(product.id),
         totalPrice: computeProductPrice(product.id) * product.quantity,
+        quantity: product.quantity,
       }
     }
 
@@ -60,11 +65,17 @@ function validateCart (cart) {
     return {
       name: 'invalid',
       description: 'invalid',
+      unitPrice: 0,
       totalPrice: 0,
+      quantity: 0,
     }
   })
 
-  return { commandLines, isValid }
+  for (const commandLine of commandLines) {
+    total += commandLine.totalPrice
+  }
+
+  return { commandLines, isValid, total }
 }
 
 function validateCustomerInfo(customer) {
