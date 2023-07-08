@@ -30,6 +30,10 @@ if (process.env.NODE_ENV !== 'development') {
 
 app.use(express.json())
 
+app.post('/heartbeat', async (req, res) => {
+  res.json({})
+})
+
 app.post('/create-payment', async (req, res) => {
   try {
     const { cart, customerInfo } = req.body
